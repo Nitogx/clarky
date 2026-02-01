@@ -8,7 +8,7 @@
     "cli": "node cli.js"
   },
   "dependencies": {
-    "@huggingface/inference": "^2.8.0",
+    "@clark-ai/huggingface-inference": "^2.8.1",
     "@clark-ai/ai-chat": "*"
   },
   "keywords": [
