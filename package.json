@@ -1,15 +1,22 @@
 {
   "name": "@clark-ai/ai-chat",
   "version": "4.4.9",
-  "description": "AI chat interface powered by Llama 3.2B with conversation history",
+  "description": "AI Chat powered by Llama 3.2B with conversation history",
   "main": "index.js",
-  "bin": {
-    "ai-chat": "cli.js"
+  "scripts": {
+    "start": "node server.js",
+    "cli": "node cli.js"
   },
-  "keywords": ["ai", "chat", "llama", "gui"],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "@huggingface/inference": "^2.6.4"
-  }
+    "@huggingface/inference": "^2.8.0",
+    "@clark-ai/ai-chat": "*"
+  },
+  "keywords": [
+    "ai",
+    "chat",
+    "llama",
+    "huggingface"
+  ],
+  "author": "Nitogx",
+  "license": "MIT"
 }
