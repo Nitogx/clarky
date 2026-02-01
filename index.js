@@ -1,6 +1,6 @@
 'use strict';
 
-const { HfInference } = require('@huggingface/inference');
+const { HfInference } = require('@clark-ai/huggingface-inference');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
