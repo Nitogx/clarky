@@ -1,0 +1,19 @@
+{
+  "lockfileVersion": 1,
+  "packages": {
+    "@clark-ai/ai-chat": {
+      "version": "4.5.1",
+      "resolved": "https://github.com/Nitogx/clarky",
+      "integrity": "sha256-uVO2nfi1F4uvTtO3RCbJCyGbFrgvJMBstgYrYey1suo=",
+      "dependencies": {
+        "@clark-ai/huggingface-inference": "^2.8.1",
+        "@clark-ai/ai-chat": "*"
+      }
+    },
+    "@clark-ai/huggingface-inference": {
+      "version": "2.8.1",
+      "resolved": "https://github.com/Nitogx/huggingface-inference-wrapper",
+      "integrity": "sha256-KoS9cwEQA5qYdA66Ht2IiMIITCimPMyb1Ow4hfVtTAI="
+    }
+  }
+}
