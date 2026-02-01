@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat - Llama 3.2B</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1200px;
+      height: 90vh;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: #f7f9fc;
+      border-right: 1px solid #e1e8ed;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .sidebar-header h2 {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+
+    .sidebar-header p {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .new-chat-btn {
+      margin: 15px;
+      padding: 12px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    .new-chat-btn:hover {
+      background: #5568d3;
+    }
+
+    .conversation-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .conversation-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 2px solid transparent;
+    }
+
+    .conversation-item:hover {
+      background: #f0f2f5;
+      border-color: #667eea;
+    }
+
+    .conversation-item.active {
+      background: #e8eaf6;
+      border-color: #667eea;
+    }
+
+    .conversation-item h4 {
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #333;
+    }
+
+    .conversation-item p {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .main-chat {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid #e1e8ed;
+      background: #f7f9fc;
+    }
+
+    .chat-header h3 {
+      font-size: 18px;
+      color: #333;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.assistant {
+      align-self: flex-start;
+      background: #f0f2f5;
+      color: #333;
+      border-bottom-left-radius: 4px;
+    }
+
+    .message .role {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      opacity: 0.8;
+      text-transform: uppercase;
+    }
+
+    .message .content {
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .message .timestamp {
+      font-size: 10px;
+      margin-top: 6px;
+      opacity: 0.6;
+    }
+
+    .input-area {
+      padding: 20px;
+      border-top: 1px solid #e1e8ed;
+      background: #f7f9fc;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 10px;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid #e1e8ed;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    #messageInput:focus {
+      border-color: #667eea;
+    }
+
+    #sendBtn {
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: transform 0.2s;
+    }
+
+    #sendBtn:hover {
+      transform: scale(1.05);
+    }
+
+    #sendBtn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    .status {
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #666;
+      text-align: center;
+    }
+
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background: #f0f2f5;
+      border-radius: 12px;
+      width: fit-content;
+      align-self: flex-start;
+    }
+
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: #999;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% {
+        transform: translateY(0);
+        opacity: 0.5;
+      }
+      30% {
+        transform: translateY(-10px);
+        opacity: 1;
+      }
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      gap: 10px;
+    }
+
+    .empty-state svg {
+      width: 80px;
+      height: 80px;
+      opacity: 0.3;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+    }
+
+    .settings-btn {
+      margin: 15px;
+      padding: 10px;
+      background: transparent;
+      border: 1px solid #e1e8ed;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #666;
+      transition: all 0.2s;
+    }
+
+    .settings-btn:hover {
+      background: #f0f2f5;
+      border-color: #667eea;
+      color: #667eea;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>🤖 AI Chat</h2>
+        <p>Powered by Llama 3.2B</p>
+      </div>
+      
+      <button class="new-chat-btn" onclick="startNewChat()">
+        ✨ New Conversation
+      </button>
+      
+      <div class="conversation-list" id="conversationList">
+        <!-- Conversations will be loaded here -->
+      </div>
+      
+      <button class="settings-btn" onclick="openConversationFolder()">
+        📁 Open Conversations Folder
+      </button>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="main-chat">
+      <div class="chat-header">
+        <h3 id="chatTitle">New Conversation</h3>
+      </div>
+      
+      <div class="messages" id="messages">
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+          </svg>
+          <p>Start a conversation with AI</p>
+        </div>
+      </div>
+      
+      <div class="status" id="status"></div>
+      
+      <div class="input-area">
+        <div class="input-container">
+          <textarea 
+            id="messageInput" 
+            placeholder="Type your message here..." 
+            rows="1"
+            onkeydown="handleKeyPress(event)"
+          ></textarea>
+          <button id="sendBtn" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentConversationId = null;
+    let ws = null;
+
+    // Connect to WebSocket server
+    function connectWebSocket() {
+      ws = new WebSocket('ws://localhost:3000');
+      
+      ws.onopen = () => {
+        console.log('Connected to AI Chat server');
+        updateStatus('Connected', 'success');
+        loadConversations();
+      };
+      
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        handleServerMessage(data);
+      };
+      
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        updateStatus('Connection error', 'error');
+      };
+      
+      ws.onclose = () => {
+        updateStatus('Disconnected - Reconnecting...', 'warning');
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    function handleServerMessage(data) {
+      if (data.type === 'stream') {
+        appendToLastMessage(data.content);
+      } else if (data.type === 'complete') {
+        removeTypingIndicator();
+        scrollToBottom();
+      } else if (data.type === 'conversations') {
+        renderConversations(data.conversations);
+      } else if (data.type === 'conversation') {
+        loadConversationMessages(data.conversation);
+      } else if (data.type === 'error') {
+        removeTypingIndicator();
+        updateStatus(data.message, 'error');
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('messageInput');
+      const message = input.value.trim();
+      
+      if (!message || !ws) return;
+      
+      // Display user message
+      addMessage('user', message);
+      input.value = '';
+      
+      // Show typing indicator
+      showTypingIndicator();
+      
+      // Send to server
+      ws.send(JSON.stringify({
+        type: 'chat',
+        message: message,
+        conversationId: currentConversationId
+      }));
+      
+      updateStatus('AI is thinking...', 'info');
+    }
+
+    function addMessage(role, content) {
+      const messagesDiv = document.getElementById('messages');
+      
+      // Remove empty state if present
+      const emptyState = messagesDiv.querySelector('.empty-state');
+      if (emptyState) {
+        emptyState.remove();
+      }
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      
+      const timestamp = new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      messageDiv.innerHTML = `
+        <div class="role">${role}</div>
+        <div class="content">${escapeHtml(content)}</div>
+        <div class="timestamp">${timestamp}</div>
+      `;
+      
+      messagesDiv.appendChild(messageDiv);
+      scrollToBottom();
+      
+      return messageDiv;
+    }
+
+    function showTypingIndicator() {
+      const messagesDiv = document.getElementById('messages');
+      const indicator = document.createElement('div');
+      indicator.className = 'typing-indicator';
+      indicator.id = 'typing';
+      indicator.innerHTML = '<span></span><span></span><span></span>';
+      messagesDiv.appendChild(indicator);
+      scrollToBottom();
+      
+      // Add empty assistant message
+      addMessage('assistant', '');
+    }
+
+    function removeTypingIndicator() {
+      const indicator = document.getElementById('typing');
+      if (indicator) indicator.remove();
+    }
+
+    function appendToLastMessage(content) {
+      const messages = document.querySelectorAll('.message.assistant');
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage) {
+        const contentDiv = lastMessage.querySelector('.content');
+        contentDiv.textContent += content;
+        scrollToBottom();
+      }
+    }
+
+    function startNewChat() {
+      currentConversationId = null;
+      document.getElementById('chatTitle').textContent = 'New Conversation';
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = `
+        <div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+          </svg>
+          <p>Start a conversation with AI</p>
+        </div>
+      `;
+      
+      // Remove active class from all conversations
+      document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+      });
+    }
+
+    function loadConversations() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'list' }));
+      }
+    }
+
+    function renderConversations(conversations) {
+      const listDiv = document.getElementById('conversationList');
+      
+      if (conversations.length === 0) {
+        listDiv.innerHTML = '<p style="text-align: center; color: #999; padding: 20px; font-size: 12px;">No saved conversations</p>';
+        return;
+      }
+      
+      listDiv.innerHTML = conversations.map(conv => `
+        <div class="conversation-item" onclick="loadConversation('${conv.name}')">
+          <h4>${conv.name}</h4>
+          <p>${conv.messageCount} messages • ${formatDate(conv.updated)}</p>
+        </div>
+      `).join('');
+    }
+
+    function loadConversation(name) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ 
+          type: 'load',
+          name: name
+        }));
+        currentConversationId = name;
+        document.getElementById('chatTitle').textContent = name;
+        
+        // Set active state
+        document.querySelectorAll('.conversation-item').forEach(item => {
+          item.classList.remove('active');
+          if (item.querySelector('h4').textContent === name) {
+            item.classList.add('active');
+          }
+        });
+      }
+    }
+
+    function loadConversationMessages(conversation) {
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.innerHTML = '';
+      
+      conversation.messages.forEach(msg => {
+        addMessage(msg.role, msg.content);
+      });
+    }
+
+    function openConversationFolder() {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'openFolder' }));
+      }
+    }
+
+    function handleKeyPress(event) {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    }
+
+    function updateStatus(message, type) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = message;
+      statusDiv.style.color = type === 'error' ? '#e74c3c' : 
+                               type === 'success' ? '#27ae60' : 
+                               type === 'warning' ? '#f39c12' : '#666';
+      
+      if (type === 'success') {
+        setTimeout(() => statusDiv.textContent = '', 3000);
+      }
+    }
+
+    function scrollToBottom() {
+      const messagesDiv = document.getElementById('messages');
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now - date;
+      
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      return date.toLocaleDateString();
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // Auto-resize textarea
+    document.getElementById('messageInput').addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 150) + 'px';
+    });
+
+    // Initialize
+    connectWebSocket();
+  </script>
+</body>
+</html>
